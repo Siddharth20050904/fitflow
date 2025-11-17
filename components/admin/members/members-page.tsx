@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Search, Plus, Edit2, Trash2 } from 'lucide-react'
 
 const mockMembers = [
@@ -14,7 +14,7 @@ const mockMembers = [
 
 export function MembersPage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [members, setMembers] = useState(mockMembers)
+  const [members] = useState(mockMembers)
 
   const filteredMembers = members.filter(m =>
     m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Bell, Trash2, Archive } from 'lucide-react'
@@ -43,7 +43,7 @@ const mockNotifications = [
 
 export function MemberNotificationsPage() {
   const [activeTab, setActiveTab] = useState('all')
-  const [notifications, setNotifications] = useState(mockNotifications)
+  const [notifications] = useState(mockNotifications)
 
   const filteredNotifications = notifications.filter((notif) => {
     if (activeTab === 'unread') return !notif.read

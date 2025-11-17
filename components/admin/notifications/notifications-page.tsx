@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, Send, Clock, CheckCircle, Trash2 } from 'lucide-react'
+import { Plus, Send, Clock, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
@@ -31,7 +31,7 @@ const mockNotifications = [
 
 export function AdminNotificationsPage() {
   const [activeTab, setActiveTab] = useState('manage')
-  const [notifications, setNotifications] = useState(mockNotifications)
+  const [notifications] = useState(mockNotifications)
 
   return (
     <div className="space-y-6">

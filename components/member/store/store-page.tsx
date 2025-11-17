@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { ShoppingCart, Star, Filter } from 'lucide-react'
+import Image from 'next/image'
 
 const mockProducts = [
   {
@@ -130,7 +131,7 @@ export function MemberStorePage() {
             <CardContent className="p-0">
               {/* Product Image */}
               <div className="aspect-square bg-muted relative overflow-hidden rounded-t-lg">
-                <img
+                <Image
                   src={product.image || "/placeholder.svg"}
                   alt={product.name}
                   className="w-full h-full object-cover"

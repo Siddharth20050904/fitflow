@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Users, Wallet, Bell, BarChart3, ShoppingBag, Settings, LogOut, Menu } from 'lucide-react'
+import { LayoutDashboard, Users, Wallet, Bell, BarChart3, ShoppingBag, Settings, LogOut } from 'lucide-react'
 import { Dumbbell } from 'lucide-react'
 
 interface AdminSidebarProps {

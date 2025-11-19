@@ -1,0 +1,216 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Type {
+  ADMIN
+  MEMBER
+}
+
+// Gym Owner/Admin model
+model Admin {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String?
+  phone     String?
+  type      Type
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  tokenId String
+  
+  members   Member[]
+  packages  Package[]
+  bills     Bill[]
+  notifications Notification[]
+  store     Store?
+  
+  @@index([email])
+}
+
+// Gym Members model
+model Member {
+  id        String     @id @default(cuid())
+  adminId   String
+  admin     Admin      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  type      Type
+  
+  name      String
+  email     String     @unique
+  phone     String?
+  status    String     @default("active") // active, inactive, suspended
+  tokenId String
+  joinDate  DateTime   @default(now())
+  
+  bills     Bill[]
+  notifications Notification[]
+  receipts  Receipt[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  @@index([adminId])
+  @@index([email])
+}
+
+// Membership Packages
+model Package {
+  id        String     @id @default(cuid())
+  adminId   String
+  admin     Admin      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  
+  name      String     // Basic, Standard, Premium
+  description String?
+  price     Float      // in rupees
+  duration  Int        // in months
+  benefits  String[]   // array of benefits
+  
+  bills     Bill[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  @@index([adminId])
+}
+
+// Billing/Invoice model
+model Bill {
+  id        String     @id @default(cuid())
+  billId    String     @unique // B001, B002 format
+  
+  adminId   String
+  admin     Admin      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  
+  memberId  String
+  member    Member     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  
+  packageId String
+  package   Package    @relation(fields: [packageId], references: [id])
+  
+  amount    Float
+  dueDate   DateTime
+  status    String     @default("pending") // pending, paid, overdue
+  paidDate  DateTime?
+  
+  receipts  Receipt[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  @@index([adminId])
+  @@index([memberId])
+  @@index([packageId])
+  @@index([status])
+}
+
+// Digital Receipts
+model Receipt {
+  id        String     @id @default(cuid())
+  receiptNo String     @unique
+  
+  adminId   String
+  billId    String
+  bill      Bill       @relation(fields: [billId], references: [id], onDelete: Cascade)
+  
+  memberId  String
+  member    Member     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  
+  amount    Float
+  paymentMethod String? // cash, card, upi, etc
+  notes     String?
+  createdAt DateTime   @default(now())
+  
+  @@index([billId])
+  @@index([memberId])
+}
+
+// Notifications for both Admin and Members
+model Notification {
+  id        String     @id @default(cuid())
+  
+  type      String     // payment_reminder, payment_confirmation, suspension_notice
+  message   String
+  read      Boolean    @default(false)
+  
+  adminId   String?
+  admin     Admin?     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  
+  memberId  String?
+  member    Member?    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime   @default(now())
+  
+  @@index([adminId])
+  @@index([memberId])
+  @@index([read])
+}
+
+// Store/Products (for future nutrition, supplements)
+model Store {
+  id        String     @id @default(cuid())
+  adminId   String     @unique
+  admin     Admin      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  
+  name      String
+  description String?
+  products  StoreProduct[]
+  orders    StoreOrder[]
+  
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model StoreProduct {
+  id        String     @id @default(cuid())
+  storeId   String
+  store     Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  
+  name      String
+  description String?
+  price     Float
+  stock     Int        @default(0)
+  category  String?    // nutrition, supplements, etc
+  
+  orderItems StoreOrderItem[]
+  
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  @@index([storeId])
+}
+
+model StoreOrder {
+  id        String     @id @default(cuid())
+  storeId   String
+  store     Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  
+  orderId   String     @unique
+  totalAmount Float
+  status    String     @default("pending") // pending, completed, cancelled
+  
+  items     StoreOrderItem[]
+  
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  @@index([storeId])
+}
+
+model StoreOrderItem {
+  id        String     @id @default(cuid())
+  orderId   String
+  order     StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  productId String
+  product   StoreProduct @relation(fields: [productId], references: [id])
+  
+  quantity  Int
+  price     Float
+  
+  @@index([orderId])
+  @@index([productId])
+}

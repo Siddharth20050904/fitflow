@@ -9,7 +9,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
     <div className="flex h-screen bg-background">

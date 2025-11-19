@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist } from 'next/font/google'
 import './globals.css'
-
+import SessionProviderWrapper from './providers/SessionProviderWrapper'
+import { Toaster } from "react-hot-toast";
 const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -35,7 +36,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geist.className} font-sans antialiased`}>
-        {children}
+        <SessionProviderWrapper>
+          {children}
+          <Toaster position="top-right" />
+        </SessionProviderWrapper>
       </body>
     </html>
   )

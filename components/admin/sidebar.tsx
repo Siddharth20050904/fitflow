@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { LayoutDashboard, Users, Wallet, Bell, BarChart3, ShoppingBag, Settings, LogOut } from 'lucide-react'
 import { Dumbbell } from 'lucide-react'
+import { signOut } from 'next-auth/react'
 
 interface AdminSidebarProps {
   open: boolean
@@ -76,7 +77,9 @@ export function AdminSidebar({ open, onOpenChange }: AdminSidebarProps) {
 
           {/* Footer */}
           <div className="p-4 border-t border-sidebar-border">
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
+            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+            onClick={()=> signOut()}
+            >
               <LogOut className="h-5 w-5" />
               Logout
             </button>

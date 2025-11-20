@@ -19,12 +19,12 @@ enum Type {
 model Admin {
   id        String     @id @default(cuid())
   email     String     @unique
-  name      String?
-  phone     String?
+  name      String
+  phone     String
   type      Type
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  tokenId String
+  tokenId String       @default("")
   
   members   Member[]
   packages  Package[]
@@ -44,9 +44,9 @@ model Member {
   
   name      String
   email     String     @unique
-  phone     String?
+  phone     String
   status    String     @default("active") // active, inactive, suspended
-  tokenId String
+  tokenId String       @default("")
   joinDate  DateTime   @default(now())
   
   bills     Bill[]

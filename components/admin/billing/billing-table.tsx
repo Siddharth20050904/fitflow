@@ -13,7 +13,9 @@ type Bill =  {
   paidDate: string | null,
 }
 
-export function BillingTable() {
+export function BillingTable(props: {
+  addedBill: Bill | null
+}) {
   const [bills, setBills] =  useState<Bill[]>([])
   const [adminId, setAdminId] = useState<string>("")
   const { data: session } = useSession()
@@ -21,6 +23,12 @@ export function BillingTable() {
   useEffect(() => {
     if (session?.user?.id) setAdminId(session.user.id)
   }, [session]);
+
+  useEffect(() => {
+    const bill = props.addedBill;
+    if (!bill) return;
+    setBills(prev => [bill, ...prev]);
+  }, [props.addedBill])
 
   useEffect(() => {
     const loadBills = async () => {

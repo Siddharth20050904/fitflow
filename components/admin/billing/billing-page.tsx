@@ -16,9 +16,20 @@ type Member = {
   email: string
 }
 
+type Bill =  {
+  member: string,
+  amount: number,
+  dueDate: string,
+  status: string,
+  id: string,
+  paidDate: string | null,
+}
+
 export function BillingPage() {
   const [showForm, setShowForm] = useState(false)
   const [members, setMembers] = useState<Member[]>([])
+  const [addedBill, setAddedBill] = useState<Bill | null>(null)
+
 
   const [memberId, setMemberId] = useState('')
   const [amount, setAmount] = useState('')
@@ -64,7 +75,15 @@ export function BillingPage() {
       paidDate: status === 'paid' ? new Date(paidDate) : null,
     })
 
-    if (res.ok) {
+    if (res.ok && res.bill) {  
+      setAddedBill({
+        id: res.bill.id,
+        member: members.find(m => m.id === memberId)?.name ?? "Unknown",
+        amount: Number(amount),
+        dueDate,
+        status,
+        paidDate: status === 'paid' ? paidDate : null
+      })
       toast.success("Bill created successfully")
       setShowForm(false)
       setMemberId('')
@@ -104,7 +123,8 @@ export function BillingPage() {
         </Button>
       </div>
 
-      <BillingTable />
+      <BillingTable addedBill={addedBill}/>
+
 
       {/* BILL CREATION MODAL */}
       {showForm && (

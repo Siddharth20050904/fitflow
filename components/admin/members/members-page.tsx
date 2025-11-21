@@ -9,6 +9,8 @@ import { addMember } from "@/app/api/admin/addMember";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { fetchMembers } from "@/app/api/member/fetchMembers";
+import { updateMember } from "@/app/api/admin/updateMember";
+import { deleteMember } from "@/app/api/admin/deleteMember";
 
 type Member = {
   id: string
@@ -28,6 +30,9 @@ export function MembersPage() {
   const [inputEmail, setInputEmail] = useState("");
   const [inputStatus, setInputStatus] = useState("active");
   const [inputDate, setInputDate] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editMemberId, setEditMemberId] = useState<string | null>(null);
+
 
   const {data: session} = useSession();
   const [adminId, setAdminId] = useState<string | null>(null);
@@ -71,26 +76,95 @@ export function MembersPage() {
     m.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSubmit = async(e : React.FormEvent<HTMLFormElement>)=>{
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const res = await addMember(inputName, inputEmail, inputStatus, inputNumber, new Date(inputDate), adminId!);
-    if(res.ok){
-      const addedMember = res.addedMember;
-      setMembers((prevItems)=>[...prevItems, {
-        id: addedMember!.id,
-        name: addedMember!.name,
-        email: addedMember!.email,
-        number: addedMember!.phone,
-        status: addedMember!.status,
-        joinDate: addedMember!.joinDate
-      }]);
 
-      toast.success(res.message)
-    }else{
-      toast.error(res.message)
+    if(!inputName || !inputEmail || !inputStatus || !inputNumber || !inputDate) {
+      toast.error("Please fill all fields");
+      return;
     }
+
+    if (isEditing) {
+      // 🔹 Update mode
+      const res = await updateMember(
+        editMemberId!,
+        inputName,
+        inputEmail,
+        inputStatus,
+        inputNumber,
+        inputDate,
+      );
+
+      if (res.success) {
+        setMembers(prev =>
+          prev.map(m =>
+            m.id === editMemberId
+              ? {
+                  ...m,
+                  name: inputName,
+                  email: inputEmail,
+                  number: inputNumber,
+                  status: inputStatus,
+                  joinDate: new Date(inputDate),
+                }
+              : m
+          )
+        );
+
+        toast.success("Member updated");
+      } else {
+        toast.error(res.message);
+      }
+    } else {
+      // 🔹 Add mode
+      const res = await addMember(
+        inputName,
+        inputEmail,
+        inputStatus,
+        inputNumber,
+        new Date(inputDate),
+        adminId!
+      );
+
+      if (res.ok) {
+        const addedMember = res.addedMember;
+
+        setMembers(prevItems => [
+          ...prevItems,
+          {
+            id: addedMember!.id,
+            name: addedMember!.name,
+            email: addedMember!.email,
+            number: addedMember!.phone,
+            status: addedMember!.status,
+            joinDate: addedMember!.joinDate,
+          },
+        ]);
+
+        toast.success(res.message);
+      } else {
+        toast.error(res.message);
+      }
+    }
+
+    // reset
     setShowForm(false);
-  }
+    setIsEditing(false);
+    setEditMemberId(null);
+  };
+
+
+  const handleDelete = async (id: string) => {
+    const res = await deleteMember(id);
+
+    if (res.success) {
+      setMembers(prev => prev.filter(m => m.id !== id));
+      toast.success(res.message);
+    } else {
+      toast.error(res.message);
+    }
+  };
+
 
   return (
     <div className="space-y-6 relative">
@@ -151,10 +225,26 @@ export function MembersPage() {
                     </td>
                     <td className="py-3 px-4 text-sm">{member.joinDate.getFullYear()}-{member.joinDate.getMonth() + 1}-{member.joinDate.getDate()}</td>
                     <td className="py-3 px-4 flex gap-2">
-                      <button className="p-1 hover:bg-muted rounded transition-colors">
+                      <button
+                        className="p-1 hover:bg-muted rounded transition-colors"
+                        onClick={() => {
+                          setIsEditing(true);
+                          setShowForm(true);
+
+                          setEditMemberId(member.id);
+                          setInputName(member.name);
+                          setInputEmail(member.email);
+                          setInputNumber(member.number);
+                          setInputStatus(member.status);
+                          setInputDate(member.joinDate.toISOString().split("T")[0]);
+                        }}
+                      >
                         <Edit2 className="h-4 w-4" />
                       </button>
-                      <button className="p-1 hover:bg-muted rounded transition-colors text-destructive">
+                      <button
+                        className="p-1 hover:bg-muted rounded transition-colors text-destructive"
+                        onClick={() => handleDelete(member.id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </td>
@@ -185,7 +275,9 @@ export function MembersPage() {
               ✕
             </button>
 
-            <h2 className="text-xl font-semibold mb-4">Add Member</h2>
+            <h2 className="text-xl font-semibold mb-4">
+              {isEditing ? "Edit Member" : "Add Member"}
+            </h2>
 
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div>

@@ -27,7 +27,6 @@ model Admin {
   tokenId String       @default("")
   
   members   Member[]
-  packages  Package[]
   bills     Bill[]
   notifications Notification[]
   store     Store?
@@ -59,38 +58,16 @@ model Member {
   @@index([email])
 }
 
-// Membership Packages
-model Package {
-  id        String     @id @default(cuid())
-  adminId   String
-  admin     Admin      @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  
-  name      String     // Basic, Standard, Premium
-  description String?
-  price     Float      // in rupees
-  duration  Int        // in months
-  benefits  String[]   // array of benefits
-  
-  bills     Bill[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  
-  @@index([adminId])
-}
 
 // Billing/Invoice model
 model Bill {
   id        String     @id @default(cuid())
-  billId    String     @unique // B001, B002 format
   
   adminId   String
   admin     Admin      @relation(fields: [adminId], references: [id], onDelete: Cascade)
   
   memberId  String
   member    Member     @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  
-  packageId String
-  package   Package    @relation(fields: [packageId], references: [id])
   
   amount    Float
   dueDate   DateTime
@@ -103,7 +80,6 @@ model Bill {
   
   @@index([adminId])
   @@index([memberId])
-  @@index([packageId])
   @@index([status])
 }
 

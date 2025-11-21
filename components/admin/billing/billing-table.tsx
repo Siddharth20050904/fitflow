@@ -1,14 +1,38 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-
-const mockBills = [
-  { id: 'B001', member: 'John Doe', amount: 5000, package: 'Premium', dueDate: '2024-12-15', status: 'paid', paidDate: '2024-12-10' },
-  { id: 'B002', member: 'Jane Smith', amount: 3000, package: 'Basic', dueDate: '2024-12-20', status: 'pending', paidDate: null },
-  { id: 'B003', member: 'Bob Johnson', amount: 4000, package: 'Standard', dueDate: '2024-11-30', status: 'overdue', paidDate: null },
-]
+import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { fetchBills } from '@/app/api/billing/fetchBills'
+type Bill =  {
+  member: string,
+  amount: number,
+  dueDate: string,
+  status: string,
+  id: string,
+  paidDate: string | null,
+}
 
 export function BillingTable() {
+  const [bills, setBills] =  useState<Bill[]>([])
+  const [adminId, setAdminId] = useState<string>("")
+  const { data: session } = useSession()
+
+  useEffect(() => {
+    if (session?.user?.id) setAdminId(session.user.id)
+  }, [session]);
+
+  useEffect(() => {
+    const loadBills = async () => {
+      if (!adminId) return;
+      const res = await fetchBills(adminId);
+      if (res.success) {
+        setBills(res.data);
+      }
+    }
+    loadBills();
+  }, [adminId]);
+
   return (
     <Card>
       <CardHeader>
@@ -19,21 +43,17 @@ export function BillingTable() {
           <table className="w-full">
             <thead className="border-b">
               <tr>
-                <th className="text-left py-3 px-4 text-sm font-semibold">Bill ID</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold">Member</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold">Amount</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold">Package</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold">Due Date</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold">Status</th>
               </tr>
             </thead>
             <tbody>
-              {mockBills.map((bill) => (
+              {bills.map((bill) => (
                 <tr key={bill.id} className="border-b hover:bg-muted/50">
-                  <td className="py-3 px-4 font-mono text-sm">{bill.id}</td>
                   <td className="py-3 px-4">{bill.member}</td>
                   <td className="py-3 px-4 font-semibold">₹{bill.amount}</td>
-                  <td className="py-3 px-4 text-sm">{bill.package}</td>
                   <td className="py-3 px-4 text-sm">{bill.dueDate}</td>
                   <td className="py-3 px-4">
                     <span className={`text-xs px-2 py-1 rounded-full ${

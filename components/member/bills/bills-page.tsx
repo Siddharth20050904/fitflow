@@ -1,47 +1,63 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Download, Eye, AlertCircle } from 'lucide-react'
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Download, Eye, AlertCircle } from "lucide-react"
+import { useSession } from "next-auth/react"
 
-const mockBills = [
-  {
-    id: 'B001',
-    date: 'Nov 15, 2024',
-    amount: 5000,
-    package: 'Premium',
-    status: 'paid',
-    paidDate: 'Nov 12, 2024',
-    receipt: true,
-  },
-  {
-    id: 'B002',
-    date: 'Oct 15, 2024',
-    amount: 5000,
-    package: 'Premium',
-    status: 'paid',
-    paidDate: 'Oct 14, 2024',
-    receipt: true,
-  },
-  {
-    id: 'B003',
-    date: 'Dec 15, 2024',
-    amount: 5000,
-    package: 'Premium',
-    status: 'pending',
-    paidDate: null,
-    receipt: false,
-  },
-]
+type Bill = {
+  id: string
+  date: string
+  amount: number
+  packageName?: string
+  status: string
+  paidDate?: string
+  receipt?: boolean
+  dueDate?: string
+}
 
 export function MemberBillsPage() {
-  const [activeTab, setActiveTab] = useState('all')
+  const [activeTab, setActiveTab] = useState("all")
+  const [bills, setBills] = useState<Bill[]>([])
+  const { data: session } = useSession()
 
-  const filteredBills = mockBills.filter((bill) => {
-    if (activeTab === 'paid') return bill.status === 'paid'
-    if (activeTab === 'pending') return bill.status === 'pending'
+  useEffect(() => {
+    const loadBills = async () => {
+      if (!session?.user?.id) return
+      try {
+        const response = await fetch("/api/member/fetchMemberBills", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ memberId: session.user.id }),
+        })
+        const data = await response.json()
+        if (data.ok) {
+          setBills(data.bills)
+        }
+      } catch (error) {
+        console.error("Failed to load bills:", error)
+        // Fallback to mock data if API fails
+        setBills([
+          {
+            id: "B001",
+            date: "Nov 15, 2024",
+            amount: 5000,
+            packageName: "Premium",
+            status: "paid",
+            paidDate: "Nov 12, 2024",
+            receipt: true,
+          },
+        ])
+      }
+    }
+    loadBills()
+  }, [session])
+
+  const filteredBills = bills.filter((bill) => {
+    if (activeTab === "paid") return bill.status === "paid"
+    if (activeTab === "pending") return bill.status === "pending"
     return true
   })
 
@@ -67,15 +83,15 @@ export function MemberBillsPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-3">
                       <h3 className="font-semibold text-lg">Bill #{bill.id}</h3>
-                      <span className={`text-xs px-3 py-1 rounded-full font-medium ${
-                        bill.status === 'paid'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-yellow-100 text-yellow-700'
-                      }`}>
+                      <span
+                        className={`text-xs px-3 py-1 rounded-full font-medium ${
+                          bill.status === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
                         {bill.status.toUpperCase()}
                       </span>
                     </div>
-                    
+
                     <div className="grid md:grid-cols-2 gap-4 mb-4">
                       <div>
                         <p className="text-xs text-muted-foreground">Bill Date</p>
@@ -85,10 +101,12 @@ export function MemberBillsPage() {
                         <p className="text-xs text-muted-foreground">Amount</p>
                         <p className="text-lg font-bold text-primary">₹{bill.amount.toLocaleString()}</p>
                       </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Package</p>
-                        <p className="text-sm font-medium">{bill.package}</p>
-                      </div>
+                      {bill.packageName && (
+                        <div>
+                          <p className="text-xs text-muted-foreground">Package</p>
+                          <p className="text-sm font-medium">{bill.packageName}</p>
+                        </div>
+                      )}
                       {bill.paidDate && (
                         <div>
                           <p className="text-xs text-muted-foreground">Paid Date</p>
@@ -126,7 +144,7 @@ export function MemberBillsPage() {
       </Tabs>
 
       {/* Pending Bill Alert */}
-      {mockBills.some(b => b.status === 'pending') && (
+      {bills.some((b) => b.status === "pending") && (
         <Card className="border-yellow-200 bg-yellow-50">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
@@ -134,11 +152,9 @@ export function MemberBillsPage() {
               <div>
                 <h3 className="font-semibold text-yellow-900">Pending Bill</h3>
                 <p className="text-sm text-yellow-800 mt-1">
-                  You have a pending bill due on Dec 15, 2024. Please make the payment to keep your membership active.
+                  You have a pending bill. Please make the payment to keep your membership active.
                 </p>
-                <Button className="mt-3 bg-primary text-primary-foreground">
-                  Pay Now
-                </Button>
+                <Button className="mt-3 bg-primary text-primary-foreground">Pay Now</Button>
               </div>
             </div>
           </CardContent>

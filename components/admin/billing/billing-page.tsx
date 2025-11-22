@@ -1,14 +1,17 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { BillingTable } from './billing-table'
-import { Plus, Download, Filter } from 'lucide-react'
-import toast from 'react-hot-toast'
-import { fetchMembers } from '@/app/api/member/fetchMembers'
-import { createBill } from '@/app/api/billing/createBill'
-import { useSession } from 'next-auth/react'
+import type React from "react"
+
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { BillingTable } from "./billing-table"
+import { Plus, Download, Filter } from "lucide-react"
+import toast from "react-hot-toast"
+import { fetchMembers } from "@/app/api/member/fetchMembers"
+import { createBill } from "@/app/api/billing/createBill"
+import { fetchPackages } from "@/app/api/packages/fetchPackages"
+import { useSession } from "next-auth/react"
 
 type Member = {
   id: string
@@ -16,26 +19,36 @@ type Member = {
   email: string
 }
 
-type Bill =  {
-  member: string,
-  amount: number,
-  dueDate: string,
-  status: string,
-  id: string,
-  paidDate: string | null,
+type Package = {
+  id: string
+  name: string
+  price: number
+  billingCycle: string
+  description: string | null
+}
+
+type Bill = {
+  member: string
+  amount: number
+  dueDate: string
+  status: string
+  id: string
+  paidDate: string | null
+  packageName?: string
 }
 
 export function BillingPage() {
   const [showForm, setShowForm] = useState(false)
   const [members, setMembers] = useState<Member[]>([])
+  const [packages, setPackages] = useState<Package[]>([])
   const [addedBill, setAddedBill] = useState<Bill | null>(null)
 
-
-  const [memberId, setMemberId] = useState('')
-  const [amount, setAmount] = useState('')
-  const [dueDate, setDueDate] = useState('')
-  const [status, setStatus] = useState('pending')
-  const [paidDate, setPaidDate] = useState('')
+  const [memberId, setMemberId] = useState("")
+  const [packageId, setPackageId] = useState("")
+  const [amount, setAmount] = useState("")
+  const [dueDate, setDueDate] = useState("")
+  const [status, setStatus] = useState("pending")
+  const [paidDate, setPaidDate] = useState("")
 
   const { data: session } = useSession()
   const [adminId, setAdminId] = useState<string | null>(null)
@@ -44,22 +57,31 @@ export function BillingPage() {
     if (session?.user?.id) setAdminId(session.user.id)
   }, [session])
 
-  // Fetch Members
   useEffect(() => {
     const load = async () => {
       if (!adminId) return
-      const res = await fetchMembers(adminId)
+      const membersRes = await fetchMembers(adminId)
+      const packagesRes = await fetchPackages(adminId)
 
-      if (res.ok) setMembers(res.members)
-      else toast.error(res.message)
+      if (membersRes.ok) setMembers(membersRes.members)
+      else toast.error(membersRes.message)
+
+      if (packagesRes.ok) setPackages(packagesRes.packages)
+      else toast.error(packagesRes.message)
     }
     load()
   }, [adminId])
 
+  const handlePackageChange = (pkgId: string) => {
+    setPackageId(pkgId)
+    const selectedPackage = packages.find((p) => p.id === pkgId)
+    if (selectedPackage) {
+      setAmount(selectedPackage.price.toString())
+    }
+  }
+
   const handleBillSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    console.log({ memberId, amount, dueDate, status, paidDate })
 
     if (!memberId || !amount || !dueDate || !status) {
       toast.error("Please fill all required fields")
@@ -69,28 +91,32 @@ export function BillingPage() {
     const res = await createBill({
       adminId: adminId!,
       memberId,
+      packageId: packageId || null,
       amount: Number(amount),
       dueDate: new Date(dueDate),
       status,
-      paidDate: status === 'paid' ? new Date(paidDate) : null,
+      paidDate: status === "paid" ? new Date(paidDate) : null,
     })
 
-    if (res.ok && res.bill) {  
+    if (res.ok && res.bill) {
+      const selectedPackage = packages.find((p) => p.id === packageId)
       setAddedBill({
         id: res.bill.id,
-        member: members.find(m => m.id === memberId)?.name ?? "Unknown",
+        member: members.find((m) => m.id === memberId)?.name ?? "Unknown",
         amount: Number(amount),
         dueDate,
         status,
-        paidDate: status === 'paid' ? paidDate : null
+        paidDate: status === "paid" ? paidDate : null,
+        packageName: selectedPackage?.name,
       })
       toast.success("Bill created successfully")
       setShowForm(false)
-      setMemberId('')
-      setAmount('')
-      setDueDate('')
-      setStatus('pending')
-      setPaidDate('')
+      setMemberId("")
+      setPackageId("")
+      setAmount("")
+      setDueDate("")
+      setStatus("pending")
+      setPaidDate("")
     } else {
       toast.error(res.message)
     }
@@ -123,8 +149,7 @@ export function BillingPage() {
         </Button>
       </div>
 
-      <BillingTable addedBill={addedBill}/>
-
+      <BillingTable addedBill={addedBill} />
 
       {/* BILL CREATION MODAL */}
       {showForm && (
@@ -133,7 +158,7 @@ export function BillingPage() {
           onClick={() => setShowForm(false)}
         >
           <div
-            className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md relative animate-in text-lg"
+            className="bg-card rounded-xl shadow-xl p-6 w-full max-w-md relative animate-in max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
@@ -155,10 +180,28 @@ export function BillingPage() {
                   value={memberId}
                   onChange={(e) => setMemberId(e.target.value)}
                 >
-                  <option value="" disabled>Select member</option>
+                  <option value="" disabled>
+                    Select member
+                  </option>
                   {members.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.name} ({m.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-md font-medium">Select Package (Optional)</label>
+                <select
+                  className="mt-1 w-full border rounded-md px-3 py-2"
+                  value={packageId}
+                  onChange={(e) => handlePackageChange(e.target.value)}
+                >
+                  <option value="">Custom Amount</option>
+                  {packages.map((pkg) => (
+                    <option key={pkg.id} value={pkg.id}>
+                      {pkg.name} - ₹{pkg.price} ({pkg.billingCycle})
                     </option>
                   ))}
                 </select>
@@ -202,7 +245,7 @@ export function BillingPage() {
               </div>
 
               {/* Paid Date (Only if status = paid) */}
-              {status === 'paid' && (
+              {status === "paid" && (
                 <div>
                   <label className="text-md font-medium">Paid Date</label>
                   <Input

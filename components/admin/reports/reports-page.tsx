@@ -1,32 +1,110 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Download, BarChart3, TrendingUp, Users } from 'lucide-react'
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { Label } from '@/components/ui/label'
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Download, BarChart3, TrendingUp, Users } from "lucide-react"
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts"
+import { Label } from "@/components/ui/label"
+import { MembershipDistributionReport } from "./membership-distribution"
+import { RevenueByPackageReport } from "./revenue-by-package"
+import { getOverviewStats } from "@/app/api/reports/overviewStats"
+import { getMonthlyRevenueTrend } from "@/app/api/reports/monthlyRevenueTrend"
+import { getPaymentSummary } from "@/app/api/reports/paymentSummary"
+import { getMemberStatistics } from "@/app/api/reports/memberStatistics"
 
-const revenueData = [
-  { month: 'Jan', revenue: 4000, paid: 3500, pending: 500 },
-  { month: 'Feb', revenue: 3000, paid: 2800, pending: 200 },
-  { month: 'Mar', revenue: 2000, paid: 1900, pending: 100 },
-  { month: 'Apr', revenue: 2780, paid: 2600, pending: 180 },
-  { month: 'May', revenue: 1890, paid: 1750, pending: 140 },
-  { month: 'Jun', revenue: 2390, paid: 2200, pending: 190 },
-]
+type OverviewStats = {
+  totalRevenue: number
+  collectionRate: number
+  totalMembers: number
+  activeMembers: number
+  newJoiners: number
+  revenueGrowth: number
+  memberGrowth: number
+}
 
-const membershipData = [
-  { name: 'Premium', value: 450 },
-  { name: 'Standard', value: 320 },
-  { name: 'Basic', value: 464 },
-]
+type RevenueData = {
+  month: string
+  revenue: number
+  paid: number
+  pending: number
+}
 
-const COLORS = ['#2a4b8c', '#6ba3d4', '#9cc8e3']
+type PaymentSummary = {
+  totalCollected: number
+  pendingPayments: number
+  overduePayments: number
+  collectionRate: number
+}
+
+type MemberStats = {
+  totalMembers: number
+  activeThisMonth: number
+  newJoiners: number
+  inactiveMembers: number
+  monthlyTrends: Array<{
+    month: string
+    change: string
+  }>
+}
 
 export function AdminReportsPage() {
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState("overview")
+  const [loading, setLoading] = useState(true)
+  const [overviewStats, setOverviewStats] = useState<OverviewStats>()
+  const [revenueData, setRevenueData] = useState<RevenueData[]>([])
+  const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null)
+  const [memberStats, setMemberStats] = useState<MemberStats | null>(null)
+  const { data: session } = useSession()
+  const [adminId, setAdminId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (session?.user?.id) setAdminId(session.user.id)
+  }, [session])
+
+  useEffect(() => {
+    const fetchAllData = async () => {
+      if (!adminId) return
+
+      try {
+        setLoading(true)
+        const [overview, revenue, payment, members] = await Promise.all([
+          getOverviewStats(adminId),
+          getMonthlyRevenueTrend(adminId),
+          getPaymentSummary(adminId),
+          getMemberStatistics(adminId),
+        ])
+
+        if (overview.success && overview.data && overview.data.totalRevenue !== undefined) setOverviewStats(overview.data)
+        if (revenue.success) setRevenueData(revenue.data)
+        if (payment.success && payment.data && payment.data.totalCollected !== undefined) setPaymentSummary(payment.data)
+        if (members.success && members.data && members.data.totalMembers !== undefined) setMemberStats(members.data)
+      } catch (error) {
+        console.error("Error fetching reports data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAllData()
+  }, [adminId])
+
+  if (loading) {
+    return <div className="text-center py-12">Loading reports...</div>
+  }
 
   return (
     <div className="space-y-6">
@@ -57,8 +135,8 @@ export function AdminReportsPage() {
                 <TrendingUp className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">₹16,060</div>
-                <p className="text-xs text-muted-foreground">+12% from last year</p>
+                <div className="text-2xl font-bold">₹{overviewStats?.totalRevenue.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">+{overviewStats?.revenueGrowth}% from last year</p>
               </CardContent>
             </Card>
 
@@ -68,7 +146,7 @@ export function AdminReportsPage() {
                 <BarChart3 className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">94.2%</div>
+                <div className="text-2xl font-bold">{overviewStats?.collectionRate}%</div>
                 <p className="text-xs text-muted-foreground">Payments on time</p>
               </CardContent>
             </Card>
@@ -79,8 +157,8 @@ export function AdminReportsPage() {
                 <Users className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">1,234</div>
-                <p className="text-xs text-muted-foreground">+5% this month</p>
+                <div className="text-2xl font-bold">{overviewStats?.totalMembers}</div>
+                <p className="text-xs text-muted-foreground">+{overviewStats?.memberGrowth}% this month</p>
               </CardContent>
             </Card>
           </div>
@@ -133,73 +211,31 @@ export function AdminReportsPage() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center pb-2 border-b">
                   <span>Total Collected</span>
-                  <span className="font-semibold">₹15,350</span>
+                  <span className="font-semibold">₹{paymentSummary?.totalCollected.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center pb-2 border-b">
                   <span>Pending Payments</span>
-                  <span className="font-semibold">₹890</span>
+                  <span className="font-semibold">₹{paymentSummary?.pendingPayments.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center pb-2 border-b">
                   <span>Overdue Payments</span>
-                  <span className="font-semibold text-destructive">₹220</span>
+                  <span className="font-semibold text-destructive">
+                    ₹{paymentSummary?.overduePayments.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center pt-2">
                   <span>Collection Rate</span>
-                  <span className="font-semibold">94.2%</span>
+                  <span className="font-semibold">{paymentSummary?.collectionRate}%</span>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Revenue by Package</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {[
-                  { name: 'Premium', revenue: '₹8,500', percentage: '52%' },
-                  { name: 'Standard', revenue: '₹5,200', percentage: '32%' },
-                  { name: 'Basic', revenue: '₹2,360', percentage: '16%' },
-                ].map((item) => (
-                  <div key={item.name} className="flex justify-between items-center pb-2 border-b">
-                    <span>{item.name}</span>
-                    <div className="text-right">
-                      <div className="font-semibold">{item.revenue}</div>
-                      <div className="text-xs text-muted-foreground">{item.percentage}</div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            <RevenueByPackageReport adminId={adminId!} />
           </div>
         </TabsContent>
 
         <TabsContent value="members" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Membership Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <PieChart>
-                  <Pie
-                    data={membershipData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value }) => `${name}: ${value}`}
-                    outerRadius={120}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {membershipData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          <MembershipDistributionReport adminId={adminId!} />
 
           <div className="grid md:grid-cols-2 gap-6">
             <Card>
@@ -208,10 +244,10 @@ export function AdminReportsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
-                  { label: 'Total Members', value: '1,234' },
-                  { label: 'Active This Month', value: '1,150' },
-                  { label: 'New Joiners', value: '43' },
-                  { label: 'Inactive Members', value: '84' },
+                  { label: "Total Members", value: memberStats?.totalMembers || 0 },
+                  { label: "Active This Month", value: memberStats?.activeThisMonth || 0 },
+                  { label: "New Joiners", value: memberStats?.newJoiners || 0 },
+                  { label: "Inactive Members", value: memberStats?.inactiveMembers || 0 },
                 ].map((stat) => (
                   <div key={stat.label} className="flex justify-between items-center pb-2 border-b">
                     <span>{stat.label}</span>
@@ -226,12 +262,7 @@ export function AdminReportsPage() {
                 <CardTitle>Membership Trends</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {[
-                  { month: 'January', change: '+45 members' },
-                  { month: 'February', change: '+38 members' },
-                  { month: 'March', change: '+52 members' },
-                  { month: 'April', change: '+29 members' },
-                ].map((trend) => (
+                {memberStats?.monthlyTrends?.map((trend : { month: string; change: string }) => (
                   <div key={trend.month} className="flex justify-between items-center pb-2 border-b">
                     <span>{trend.month}</span>
                     <span className="font-semibold text-primary">{trend.change}</span>

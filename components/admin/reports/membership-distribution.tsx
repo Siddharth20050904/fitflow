@@ -2,9 +2,20 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Users, TrendingUp, BarChart3, AlertCircle } from "lucide-react"
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts"
+import { Users, TrendingUp, UserCheck } from "lucide-react"
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts"
 import { getMembershipDistribution } from "@/app/api/reports/membershipDistribution"
 
 interface PackageMembershipData {
@@ -16,36 +27,36 @@ interface PackageMembershipData {
   activeMembers: number
   inactiveMembers: number
   features: string[]
-  members: Array<{
+  members: {
     id: string
     name: string
     email: string
     phone: string
     status: string
     joinDate: string
-  }>
+  }[]
 }
 
 type Summary = {
-    totalPackages: number
-    totalMembers: number
-    totalActiveMembers: number
-    totalPotentialRevenue: number
+  totalPackages: number
+  totalMembers: number
+  totalActiveMembers: number
+  totalInactiveMembers: number
+  totalPotentialRevenue: number
 }
 
 type ChartData = {
-    name: string
-    active: number
-    inactive: number
-    total: number
+  name: string
+  value: number
 }
 
 export function MembershipDistributionReport({ adminId }: { adminId: string }) {
   const [data, setData] = useState<PackageMembershipData[]>([])
   const [summary, setSummary] = useState<Summary | null>(null)
   const [loading, setLoading] = useState(true)
-  const [expandedPackage, setExpandedPackage] = useState<string | null>(null)
   const [chartData, setChartData] = useState<ChartData[]>([])
+
+  const COLORS = ["#2a4b8c", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,9 +69,7 @@ export function MembershipDistributionReport({ adminId }: { adminId: string }) {
         setChartData(
           result.data.packages.map((pkg) => ({
             name: pkg.packageName,
-            active: pkg.activeMembers,
-            inactive: pkg.inactiveMembers,
-            total: pkg.totalMembers,
+            value: pkg.totalMembers,
           })),
         )
       }
@@ -79,151 +88,140 @@ export function MembershipDistributionReport({ adminId }: { adminId: string }) {
       <div className="grid md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Packages</CardTitle>
-            <BarChart3 className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary?.totalPackages || 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Members</CardTitle>
             <Users className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary?.totalMembers || 0}</div>
-            <p className="text-xs text-muted-foreground">{summary?.totalActiveMembers || 0} active</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Members</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <UserCheck className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{summary?.totalActiveMembers || 0}</div>
             <p className="text-xs text-muted-foreground">
               {summary?.totalMembers ? Math.round((summary.totalActiveMembers / summary.totalMembers) * 100) : 0}%
-              active rate
+              active
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Potential Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Inactive Members</CardTitle>
+            <Users className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">{summary?.totalInactiveMembers || 0}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Packages</CardTitle>
             <TrendingUp className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{summary?.totalPotentialRevenue?.toLocaleString() || 0}</div>
+            <div className="text-2xl font-bold">{summary?.totalPackages || 0}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Membership Chart */}
+      {/* Membership Distribution Chart */}
       {chartData.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Member Distribution by Package</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="active" stackId="a" fill="#10b981" name="Active" />
-                <Bar dataKey="inactive" stackId="a" fill="#ef4444" name="Inactive" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Members by Package (Pie Chart)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value }) => `${name}: ${value}`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Active vs Inactive by Package</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={data.map((pkg) => ({
+                    name: pkg.packageName,
+                    active: pkg.activeMembers,
+                    inactive: pkg.inactiveMembers,
+                  }))}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="active" fill="#10b981" name="Active" />
+                  <Bar dataKey="inactive" fill="#fbbf24" name="Inactive" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
-      {/* Detailed Package Cards */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Package Details</h3>
-        {data.map((pkg) => (
-          <Card key={pkg.packageId} className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardHeader onClick={() => setExpandedPackage(expandedPackage === pkg.packageId ? null : pkg.packageId)}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <CardTitle className="text-lg">{pkg.packageName}</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      ₹{pkg.price} / {pkg.billingCycle}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-8 text-right">
-                  <div>
-                    <p className="text-2xl font-bold text-primary">{pkg.totalMembers}</p>
-                    <p className="text-xs text-muted-foreground">Total Members</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-green-600">{pkg.activeMembers}</p>
-                    <p className="text-xs text-muted-foreground">Active</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-red-500">{pkg.inactiveMembers}</p>
-                    <p className="text-xs text-muted-foreground">Inactive</p>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-
-            {/* Features */}
-            {pkg.features && pkg.features.length > 0 && (
-              <CardContent className="pt-0">
-                <div className="flex gap-2 flex-wrap">
-                  {pkg.features.map((feature) => (
-                    <Badge key={feature} variant="secondary">
-                      {feature}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            )}
-
-            {/* Expanded Member List */}
-            {expandedPackage === pkg.packageId && (
-              <CardContent className="pt-0">
-                <div className="mt-4 pt-4 border-t">
-                  <h4 className="font-semibold mb-3">Members in this package</h4>
-                  {pkg.members.length > 0 ? (
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
-                      {pkg.members.map((member) => (
-                        <div key={member.id} className="flex items-center justify-between p-2 hover:bg-muted rounded">
-                          <div>
-                            <p className="font-medium">{member.name}</p>
-                            <p className="text-sm text-muted-foreground">{member.email}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm">{member.phone}</p>
-                            <Badge variant={member.status === "active" ? "default" : "secondary"}>
-                              {member.status}
-                            </Badge>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <AlertCircle className="h-4 w-4" />
-                      No members in this package
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            )}
-          </Card>
-        ))}
-      </div>
+      {/* Detailed Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Membership Details by Package</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-2">Package</th>
+                  <th className="text-center py-2 px-2">Price</th>
+                  <th className="text-center py-2 px-2">Cycle</th>
+                  <th className="text-center py-2 px-2">Total</th>
+                  <th className="text-center py-2 px-2">Active</th>
+                  <th className="text-center py-2 px-2">Inactive</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((pkg) => (
+                  <tr key={pkg.packageId} className="border-b hover:bg-muted/50">
+                    <td className="py-2 px-2 font-medium">{pkg.packageName}</td>
+                    <td className="text-center py-2 px-2">₹{pkg.price?.toLocaleString()}</td>
+                    <td className="text-center py-2 px-2">{pkg.billingCycle}</td>
+                    <td className="text-center py-2 px-2 font-semibold">{pkg.totalMembers}</td>
+                    <td className="text-center py-2 px-2 text-green-600">{pkg.activeMembers}</td>
+                    <td className="text-center py-2 px-2 text-yellow-600">{pkg.inactiveMembers}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

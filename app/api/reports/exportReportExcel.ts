@@ -11,7 +11,7 @@ export type ReportExportData = {
   collectionRate?: number
   bills?: {
     id: string
-    memberId: string
+    memberId?: string
     amount: number
     status: string
     packageName: string
@@ -48,7 +48,7 @@ export type ReportExportData = {
     price: number
     billingCycle: string
     memberCount: number
-    bills: {
+    bills?: {
       name: string
       email: string
       status: string
@@ -77,7 +77,7 @@ export const exportReportExcel = async (
 
       excel += "BILL DETAILS\n"
       excel += "Bill ID\tMember ID\tAmount\tStatus\tPackage\tDate\n"
-      reportData.bills?.forEach((bill: {id: string, memberId: string, amount: number, status: string, packageName: string, date: string}) => {
+      reportData.bills?.forEach((bill: {id: string, memberId?: string, amount: number, status: string, packageName: string, date: string}) => {
         excel += `${bill.id}\t${bill.memberId}\t${bill.amount}\t${bill.status}\t${bill.packageName}\t${bill.date}\n`
       })
     }
@@ -121,15 +121,15 @@ export const exportReportExcel = async (
 
       excel += "PACKAGE DETAILS\n"
       excel += "Package Name\tPrice\tBilling Cycle\tMember Count\n"
-      reportData.packages.forEach((pkg: {id?: string, name: string, price: number, billingCycle: string, memberCount: number, bills: {name: string, email: string, status: string}[]}) => {
+      reportData.packages.forEach((pkg: {id?: string, name: string, price: number, billingCycle: string, memberCount: number, bills?: {name: string, email: string, status: string}[]}) => {
         excel += `${pkg.name}\t${pkg.price}\t${pkg.billingCycle}\t${pkg.memberCount}\n`
       })
 
       excel += "\nMEMBER DETAILS BY PACKAGE\n"
-      reportData.packages.forEach((pkg: {id?: string, name: string, price: number, billingCycle: string, memberCount: number, bills: {name: string, email: string, status: string}[]}) => {
+      reportData.packages.forEach((pkg: {id?: string, name: string, price: number, billingCycle: string, memberCount: number, bills?: {name: string, email: string, status: string}[]}) => {
         excel += `\n${pkg.name}\n`
         excel += "Member Name\tEmail\tStatus\n"
-        pkg.bills.forEach((member: {name: string, email: string, status: string}) => {
+        pkg.bills?.forEach((member: {name: string, email: string, status: string}) => {
           excel += `${member.name}\t${member.email}\t${member.status}\n`
         })
       })

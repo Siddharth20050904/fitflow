@@ -13,30 +13,29 @@ interface CustomReportSectionProps {
   adminId: string
 }
 
-export type ReportExportData = {
-  title?: string
+export type ReportExportData = Partial<{
+  title: string
+  billCount: number
+  totalRevenue: number
+  totalPackages: number
+  totalCollected: number
+  pendingAmount: number
+  collectionRate: number
+  totalMembers: number
+  activeMembers: number
+  inactiveMembers: number
 
-  // Financial Summary
-  billCount?: number
-  totalRevenue?: number
-  totalCollected?: number
-  pendingAmount?: number
-  collectionRate?: number
-  bills?: {
+  bills: {
     id: string
-    memberId: string
+    memberId?: string
+    memberName?: string
     amount: number
     status: string
     packageName: string
     date: string
-    memberName?: string // Payment report also sends memberName
   }[]
 
-  // Member Activity
-  totalMembers?: number
-  activeMembers?: number
-  inactiveMembers?: number
-  members?: {
+  members: {
     id: string
     name: string
     email: string
@@ -47,27 +46,19 @@ export type ReportExportData = {
     billsCount: number
   }[]
 
-  // Payment Collection
-  paidBills?: number
-  totalBills?: number
-  pendingBills?: number
-  totalPending?: number
-
-  // Membership Analysis
-  totalPackages?: number
-  packages?: {
-    id?: string
+  packages: {
     name: string
     price: number
     billingCycle: string
     memberCount: number
-    bills: {
+    members: {
       name: string
       email: string
       status: string
     }[]
   }[]
-}
+}>
+
 
 
 export function CustomReportSection({ adminId }: CustomReportSectionProps) {
@@ -92,6 +83,7 @@ export function CustomReportSection({ adminId }: CustomReportSectionProps) {
       }
 
       const reportData = reportResponse.data
+      console.log("Generated Report Data:", reportData)
 
       // Export in selected format
       let exportResponse = null

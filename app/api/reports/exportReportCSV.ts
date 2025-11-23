@@ -1,6 +1,47 @@
 "use server"
 
-export const exportReportCSV = async (reportData: {title?: string, billCount?: number, totalRevenue?: number, totalPackages?: number, totalCollected?: number, pendingAmount?: number, collectionRate?: number, bills?: {id: string, memberName: string, memberId: string, amount: number, status: string, packageName: string, date: string}[], totalMembers?: number, activeMembers?: number, inactiveMembers?: number, members?: {id: string, name: string, email: string, phone: string, packageName: string, status: string, joinDate: string, billsCount: number}[], paidBills?: number, totalBills?: number, pendingBills?: number, totalPending?: number, packages?: {name: string, price: number, billingCycle: string, memberCount: number, members: {name: string, email: string, status: string}[]}[] }) => {
+export const exportReportCSV = async (reportData: {
+  title?: string
+  billCount?: number
+  totalRevenue?: number
+  totalPackages?: number
+  totalCollected?: number
+  pendingAmount?: number
+  collectionRate?: number
+  bills?: {
+    id: string
+    memberName?: string
+    memberId?: string
+    amount: number
+    status: string
+    packageName: string
+    date: string
+  }[]
+  totalMembers?: number
+  activeMembers?: number
+  inactiveMembers?: number
+  members?: {
+    id: string
+    name: string
+    email: string
+    phone: string
+    packageName: string
+    status: string
+    joinDate: string
+    billsCount: number
+  }[]
+  paidBills?: number
+  totalBills?: number
+  pendingBills?: number
+  totalPending?: number
+  packages?: {
+    name: string
+    price: number
+    billingCycle: string
+    memberCount: number
+    members: { name: string; email: string; status: string }[]
+  }[]
+}) => {
   try {
     let csv = ""
 
@@ -18,9 +59,19 @@ export const exportReportCSV = async (reportData: {title?: string, billCount?: n
 
       csv += "BILL DETAILS\n"
       csv += "Bill ID,Member ID,Amount,Status,Package,Date\n"
-      reportData.bills?.forEach((bill: {id: string, memberId: string, amount: number, status: string, packageName: string, date: string}) => {
-        csv += `${bill.id},${bill.memberId},${bill.amount},${bill.status},${bill.packageName},"${bill.date}"\n`
-      })
+      reportData.bills?.forEach(
+        (bill: {
+          id: string
+          memberId?: string
+          memberName?: string
+          amount: number
+          status: string
+          packageName: string
+          date: string
+        }) => {
+          csv += `${bill.id},${bill.memberId},${bill.amount},${bill.status},${bill.packageName},"${bill.date}"\n`
+        },
+      )
     }
 
     // Member Activity
@@ -32,9 +83,20 @@ export const exportReportCSV = async (reportData: {title?: string, billCount?: n
 
       csv += "MEMBER DETAILS\n"
       csv += "ID,Name,Email,Phone,Package,Status,Join Date,Bills Count\n"
-      reportData.members.forEach((member: {id: string, name: string, email: string, phone: string, packageName: string, status: string, joinDate: string, billsCount: number}) => {
-        csv += `${member.id},"${member.name}",${member.email},${member.phone},${member.packageName},${member.status},"${member.joinDate}",${member.billsCount}\n`
-      })
+      reportData.members.forEach(
+        (member: {
+          id: string
+          name: string
+          email: string
+          phone: string
+          packageName: string
+          status: string
+          joinDate: string
+          billsCount: number
+        }) => {
+          csv += `${member.id},"${member.name}",${member.email},${member.phone},${member.packageName},${member.status},"${member.joinDate}",${member.billsCount}\n`
+        },
+      )
     }
 
     // Payment Collection
@@ -49,9 +111,18 @@ export const exportReportCSV = async (reportData: {title?: string, billCount?: n
 
       csv += "PAYMENT DETAILS\n"
       csv += "Bill ID,Member Name,Amount,Status,Package,Date\n"
-      reportData.bills?.forEach((bill: {id: string, memberName: string, amount: number, status: string, packageName: string, date: string}) => {
-        csv += `${bill.id},"${bill.memberName}",${bill.amount},${bill.status},${bill.packageName},"${bill.date}"\n`
-      })
+      reportData.bills?.forEach(
+        (bill: {
+          id: string
+          memberName?: string
+          amount: number
+          status: string
+          packageName: string
+          date: string
+        }) => {
+          csv += `${bill.id},"${bill.memberName}",${bill.amount},${bill.status},${bill.packageName},"${bill.date}"\n`
+        },
+      )
     }
 
     // Membership Analysis
@@ -62,18 +133,34 @@ export const exportReportCSV = async (reportData: {title?: string, billCount?: n
 
       csv += "PACKAGE DETAILS\n"
       csv += "Package Name,Price,Billing Cycle,Member Count\n"
-      reportData.packages.forEach((pkg: {name: string, price: number, billingCycle: string, memberCount: number, members: {name: string, email: string, status: string}[]}) => {
-        csv += `"${pkg.name}",${pkg.price},${pkg.billingCycle},${pkg.memberCount}\n`
-      })
+      reportData.packages.forEach(
+        (pkg: {
+          name: string
+          price: number
+          billingCycle: string
+          memberCount: number
+          members: { name: string; email: string; status: string }[]
+        }) => {
+          csv += `"${pkg.name}",${pkg.price},${pkg.billingCycle},${pkg.memberCount}\n`
+        },
+      )
 
       csv += "\nMEMBER DETAILS BY PACKAGE\n"
-      reportData.packages.forEach((pkg: {name: string, price: number, billingCycle: string, memberCount: number, members: {name: string, email: string, status: string}[]}) => {
-        csv += `\n${pkg.name}\n`
-        csv += "Member Name,Email,Status\n"
-        pkg.members.forEach((member: {name: string, email: string, status: string}) => {
-          csv += `"${member.name}",${member.email},${member.status}\n`
-        })
-      })
+      reportData.packages.forEach(
+        (pkg: {
+          name: string
+          price: number
+          billingCycle: string
+          memberCount: number
+          members: { name: string; email: string; status: string }[]
+        }) => {
+          csv += `\n${pkg.name}\n`
+          csv += "Member Name,Email,Status\n"
+          pkg.members.forEach((member: { name: string; email: string; status: string }) => {
+            csv += `"${member.name}",${member.email},${member.status}\n`
+          })
+        },
+      )
     }
 
     return { success: true, data: csv, filename: `report_${Date.now()}.csv` }

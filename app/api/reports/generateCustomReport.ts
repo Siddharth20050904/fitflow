@@ -69,7 +69,8 @@ type MembershipReport = {
     price: number
     billingCycle: string
     memberCount: number
-    bills: {
+    members: {
+      
       name: string
       email: string
       status: string
@@ -201,6 +202,7 @@ export const generateCustomReport = async (adminId: string, filters: ReportFilte
           collectionRate: allBills.length ? Math.round((paidBillsPayment.length / allBills.length) * 100) : 0,
           bills: allBills.map((b) => ({
             id: b.id,
+            memberId: b.memberId,
             memberName: b.member.name,
             amount: b.amount,
             status: b.status,
@@ -229,7 +231,7 @@ export const generateCustomReport = async (adminId: string, filters: ReportFilte
             price: p.price,
             billingCycle: p.billingCycle,
             memberCount: p.bills.length,
-            bills: p.bills.map((b) => ({
+            members: p.bills.map((b) => ({
               name: b.member.name,
               email: b.member.email,
               status: b.member.status,

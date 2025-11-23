@@ -43,7 +43,15 @@ export const getMembershipDistribution = async (adminId: string) => {
         },
       },
       orderBy: { createdAt: "desc" },
-    })
+    });
+
+    const totalMembers = await prisma.member.count({
+      where: { adminId },
+    });
+
+    const totalActiveMembers = await prisma.member.count({
+      where: { adminId, status: "active" },
+    });
 
     const distributionData: PackageMembershipData[] = packages.map((pkg) => {
       // Get unique members for this package using a Set to avoid duplicates
@@ -53,6 +61,7 @@ export const getMembershipDistribution = async (adminId: string) => {
           uniqueMembers.set(bill.member.id, bill.member)
         }
       })
+      // console.log("Unique members for package", uniqueMembers, ":", uniqueMembers.size)
 
       const membersList = Array.from(uniqueMembers.values())
       const activeMembers = membersList.filter((m) => m.status === "active").length
@@ -77,10 +86,6 @@ export const getMembershipDistribution = async (adminId: string) => {
         })),
       }
     })
-
-    // Calculate total statistics
-    const totalMembers = distributionData.reduce((sum, pkg) => sum + pkg.totalMembers, 0)
-    const totalActiveMembers = distributionData.reduce((sum, pkg) => sum + pkg.activeMembers, 0)
     const totalRevenue = distributionData.reduce((sum, pkg) => sum + pkg.price * pkg.totalMembers, 0)
 
     return {

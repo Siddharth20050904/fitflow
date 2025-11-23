@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Download, BarChart3, TrendingUp, Users } from "lucide-react"
+import { BarChart3, TrendingUp, Users } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -18,13 +17,13 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts"
-import { Label } from "@/components/ui/label"
 import { MembershipDistributionReport } from "./membership-distribution"
 import { RevenueByPackageReport } from "./revenue-by-package"
 import { getOverviewStats } from "@/app/api/reports/overviewStats"
 import { getMonthlyRevenueTrend } from "@/app/api/reports/monthlyRevenueTrend"
 import { getPaymentSummary } from "@/app/api/reports/paymentSummary"
 import { getMemberStatistics } from "@/app/api/reports/memberStatistics"
+import { CustomReportSection } from "./custom-report-section"
 
 type OverviewStats = {
   totalRevenue: number
@@ -113,10 +112,6 @@ export function AdminReportsPage() {
           <h1 className="text-3xl font-bold">Reports</h1>
           <p className="text-muted-foreground">View and export gym analytics and reports</p>
         </div>
-        <Button className="bg-primary text-primary-foreground">
-          <Download className="h-4 w-4 mr-2" />
-          Export Report
-        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -157,7 +152,7 @@ export function AdminReportsPage() {
                 <Users className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{overviewStats?.totalMembers}</div>
+                <div className="text-2xl font-bold">{overviewStats?.activeMembers}</div>
                 <p className="text-xs text-muted-foreground">+{overviewStats?.memberGrowth}% this month</p>
               </CardContent>
             </Card>
@@ -274,74 +269,7 @@ export function AdminReportsPage() {
         </TabsContent>
 
         <TabsContent value="custom" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Generate Custom Report</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="report-type">Report Type</Label>
-                  <select
-                    id="report-type"
-                    className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option>Financial Summary</option>
-                    <option>Member Activity</option>
-                    <option>Payment Collection</option>
-                    <option>Membership Analysis</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="date-range">Date Range</Label>
-                  <select
-                    id="date-range"
-                    className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option>Last 30 Days</option>
-                    <option>Last Quarter</option>
-                    <option>Last 6 Months</option>
-                    <option>This Year</option>
-                    <option>Custom Range</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="format">Export Format</Label>
-                  <select
-                    id="format"
-                    className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option>PDF</option>
-                    <option>Excel</option>
-                    <option>CSV</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="includes">Include</Label>
-                  <div className="flex gap-4 mt-2">
-                    <label className="flex items-center gap-2">
-                      <input type="checkbox" defaultChecked />
-                      <span className="text-sm">Charts</span>
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input type="checkbox" defaultChecked />
-                      <span className="text-sm">Tables</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <Button className="bg-primary text-primary-foreground">
-                <Download className="h-4 w-4 mr-2" />
-                Generate & Download
-              </Button>
-            </CardContent>
-          </Card>
+          {adminId && <CustomReportSection adminId={adminId} />}
         </TabsContent>
       </Tabs>
     </div>

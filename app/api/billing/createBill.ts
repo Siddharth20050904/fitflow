@@ -12,7 +12,7 @@ export const createBill = async ({
 }: {
   adminId: string
   memberId: string
-  packageId?: string | null
+  packageId: string | null
   amount: number
   dueDate: Date
   status: string
@@ -23,7 +23,7 @@ export const createBill = async ({
       data: {
         adminId,
         memberId,
-        packageId: packageId || null,
+        packageId: packageId,
         amount,
         dueDate,
         status,

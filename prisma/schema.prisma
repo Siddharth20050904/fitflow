@@ -149,18 +149,19 @@ model StoreProduct {
   id        String     @id @default(cuid())
   storeId   String
   store     Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  
+
   name      String
   description String?
   price     Float
   stock     Int        @default(0)
   category  String?    // nutrition, supplements, etc
-  
+  sales     Int        @default(0)
+
   orderItems StoreOrderItem[]
-  
+
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  
+
   @@index([storeId])
 }
 
@@ -168,17 +169,20 @@ model StoreOrder {
   id        String     @id @default(cuid())
   storeId   String
   store     Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  
-  orderId   String     @unique
+
+  memberId  String?
+  memberName String
   totalAmount Float
-  status    String     @default("pending") // pending, completed, cancelled
-  
+  status    String     @default("pending") // pending, delivered
+  paymentStatus String  @default("pending") // pending, paid
+
   items     StoreOrderItem[]
-  
+
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  
+
   @@index([storeId])
+  @@index([memberId])
 }
 
 model StoreOrderItem {

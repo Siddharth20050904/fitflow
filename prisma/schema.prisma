@@ -30,7 +30,6 @@ model Admin {
   bills     Bill[]
   packages  Package[]
   notifications Notification[]
-  store     Store?
   
   @@index([email])
 }
@@ -130,55 +129,37 @@ model Notification {
   @@index([read])
 }
 
-// Store/Products (for future nutrition, supplements)
-model Store {
-  id        String     @id @default(cuid())
-  adminId   String     @unique
-  admin     Admin      @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  
-  name      String
-  description String?
-  products  StoreProduct[]
-  orders    StoreOrder[]
-  
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-}
-
 model StoreProduct {
   id        String     @id @default(cuid())
-  storeId   String
-  store     Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  
+
   name      String
   description String?
   price     Float
   stock     Int        @default(0)
   category  String?    // nutrition, supplements, etc
-  
+  sales     Int        @default(0)
+
   orderItems StoreOrderItem[]
-  
+
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  
-  @@index([storeId])
 }
 
 model StoreOrder {
   id        String     @id @default(cuid())
-  storeId   String
-  store     Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  
-  orderId   String     @unique
+
+  memberId  String?
+  memberName String
   totalAmount Float
-  status    String     @default("pending") // pending, completed, cancelled
-  
+  status    String     @default("pending") // pending, delivered
+  paymentStatus String  @default("pending") // pending, paid
+
   items     StoreOrderItem[]
-  
+
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   
-  @@index([storeId])
+  @@index([memberId])
 }
 
 model StoreOrderItem {
@@ -187,7 +168,7 @@ model StoreOrderItem {
   order     StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
   
   productId String
-  product   StoreProduct @relation(fields: [productId], references: [id])
+  product   StoreProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
   
   quantity  Int
   price     Float

@@ -34,6 +34,7 @@ export function AdminStorePage() {
   const [editingOrder, setEditingOrder] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<StoreOrder | null>(null)
   const [orders, setOrders] = useState<StoreOrder[]>([])
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
 
 
@@ -280,15 +281,18 @@ export function AdminStorePage() {
                         {/* --- STATUS BUTTON --- */}
                         <td className="py-3 px-4">
                           <Button
-                            disabled={order.status === "delivered"}
+                            disabled={order.status === "delivered" || updatingOrderId === order.id}
                             size="sm"
                             variant="outline"
                             className={`
                               ${order.status === "delivered" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}
                               rounded-full px-3 shadow-lg
+                              ${updatingOrderId === order.id ? "opacity-50 cursor-not-allowed" : ""}
                             `}
                             onClick={async () => {
+                              setUpdatingOrderId(order.id);
                               const res = await updateOrderStatus({orderId: order.id, status: "delivered"});
+                              setUpdatingOrderId(null);
                               if(!res.ok){
                                 toast.error("Failed to update order status");
                                 return;
@@ -306,15 +310,18 @@ export function AdminStorePage() {
                         {/* --- PAYMENT STATUS BUTTON --- */}
                         <td className="py-3 px-4">
                           <Button
-                            disabled={order.paymentStatus === "paid"}
+                            disabled={order.paymentStatus === "paid" || updatingOrderId === order.id}
                             size="sm"
                             variant="outline"
                             className={`
                               ${order.paymentStatus === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}
                               rounded-full px-3 shadow-lg
+                              ${updatingOrderId === order.id ? "opacity-50 cursor-not-allowed" : ""}
                             `}
                             onClick={async () => {
+                              setUpdatingOrderId(order.id);
                               const res = await updateOrderStatus({orderId: order.id, paymentStatus: "paid"});
+                              setUpdatingOrderId(null);
                               if(!res.ok){
                                 toast.error("Failed to update payment status");
                                 return;

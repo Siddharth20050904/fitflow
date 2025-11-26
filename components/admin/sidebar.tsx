@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils"
 import { LayoutDashboard, Users, Wallet, Bell, BarChart3, ShoppingBag, Settings, LogOut } from "lucide-react"
 import { Dumbbell } from "lucide-react"
 import { signOut } from "next-auth/react"
+import { fetchGymInfo } from "@/app/api/settings/fetchGymInfo"
+import { useEffect, useState } from "react"
 
 interface AdminSidebarProps {
   open: boolean
@@ -13,7 +15,16 @@ interface AdminSidebarProps {
 }
 
 export function AdminSidebar({ open, onOpenChange }: AdminSidebarProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
+  const [gymName, setGymName] = useState("");
+
+  useEffect(() => {
+    async function getGymName() {
+      const info = await fetchGymInfo();
+      setGymName(info?.name || "FitFlow");
+    }
+    getGymName();
+  }, []);
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
@@ -44,7 +55,7 @@ export function AdminSidebar({ open, onOpenChange }: AdminSidebarProps) {
             <div className="h-8 w-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
               <Dumbbell className="h-5 w-5 text-sidebar-primary-foreground" />
             </div>
-            <span className="text-lg font-bold text-sidebar-foreground">FitFlow</span>
+            <span className="text-lg font-bold text-sidebar-foreground">{gymName}</span>
           </Link>
 
           {/* Navigation */}

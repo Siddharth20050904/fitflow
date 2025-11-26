@@ -3,8 +3,19 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { LandingHeader } from '@/components/landing/header'
 import { FeatureGrid } from '@/components/landing/feature-grid'
+import { fetchGymInfo } from './api/settings/fetchGymInfo'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
+  const [gymName, setGymName] = useState("");
+
+  useEffect(() => {
+    async function getGymName() {
+      const info = await fetchGymInfo();
+      setGymName(info?.name || "FitFlow");
+    }
+    getGymName();
+  }, []);
   return (
     <main className="min-h-screen bg-background">
       <LandingHeader />
@@ -14,7 +25,7 @@ export default function Home() {
           {/* Hero Section */}
           <div className="text-center mb-20">
             <h1 className="text-5xl font-bold tracking-tight text-foreground mb-4">
-              FitFlow
+              {gymName}
             </h1>
             <p className="text-xl text-muted-foreground mb-8">
               Complete gym management system for owners and members

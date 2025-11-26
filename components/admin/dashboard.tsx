@@ -3,17 +3,43 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Users, DollarSign, FileText, AlertCircle } from 'lucide-react'
-
-const dashboardData = [
-  { month: 'Jan', revenue: 4000, members: 24 },
-  { month: 'Feb', revenue: 3000, members: 22 },
-  { month: 'Mar', revenue: 2000, members: 29 },
-  { month: 'Apr', revenue: 2780, members: 20 },
-  { month: 'May', revenue: 1890, members: 28 },
-  { month: 'Jun', revenue: 2390, members: 30 },
-]
+import { DashboardChartPoint, getDashboardData } from '@/app/api/admin/dashboardData'
+import { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
 
 export function AdminDashboard() {
+  const [adminId, setAdminId] = useState("");
+  const {data: session} = useSession();
+  const [dashboardData, setDashboardData] = useState<DashboardChartPoint[]>([]);
+  const [stats, setStats] = useState({
+    totalMembers: 0,
+    monthlyRevenue: 0,
+    pendingBills: 0,
+    overdueBills: 0,
+    pendingAmount: 0
+  });
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      setAdminId(session.user.id);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    async function fetchDashboardData() {
+      if (!adminId) return;
+
+      const response = await getDashboardData(adminId)
+
+      if (response) {
+        setDashboardData(response.chart);
+        setStats(response.stats);
+      }
+    }
+
+    fetchDashboardData();
+  }, [adminId]);
+
   return (
     <div className="space-y-8">
       <div>
@@ -29,8 +55,7 @@ export function AdminDashboard() {
             <Users className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <div className="text-2xl font-bold">{stats.totalMembers}</div>
           </CardContent>
         </Card>
 
@@ -40,8 +65,7 @@ export function AdminDashboard() {
             <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$42,390</div>
-            <p className="text-xs text-muted-foreground">+8% from last month</p>
+            <div className="text-2xl font-bold">₹{stats.monthlyRevenue}</div>
           </CardContent>
         </Card>
 
@@ -51,8 +75,8 @@ export function AdminDashboard() {
             <FileText className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">87</div>
-            <p className="text-xs text-muted-foreground">$24,500 total</p>
+            <div className="text-2xl font-bold">{stats.pendingBills}</div>
+            <p className="text-xs text-muted-foreground">₹{stats.pendingAmount} total</p>
           </CardContent>
         </Card>
 
@@ -62,7 +86,7 @@ export function AdminDashboard() {
             <AlertCircle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{stats.overdueBills}</div>
             <p className="text-xs text-muted-foreground">Immediate action needed</p>
           </CardContent>
         </Card>

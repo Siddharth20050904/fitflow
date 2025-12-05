@@ -1,27 +1,28 @@
-import { loginAdmin } from "@/app/api/admin/login";
-import { AuthOptions, DefaultSession } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import { loginAdmin } from "@/app/api/admin/login"
+import { loginMember } from "@/app/api/member/login"
+import type { AuthOptions, DefaultSession } from "next-auth"
+import CredentialsProvider from "next-auth/providers/credentials"
 
 declare module "next-auth" {
   interface Session {
     user: {
-      id: string;
-      email: string;
-      type: string;
-      name: string;
-    } & DefaultSession["user"];
+      id: string
+      email: string
+      type: string
+      name: string
+    } & DefaultSession["user"]
   }
   interface User {
-    id: string;
-    email: string;
-    type: string;
-    name: string;
+    id: string
+    email: string
+    type: string
+    name: string
   }
   interface JWT {
-    id: string;
-    email: string;
-    type: string;
-    name: string;
+    id: string
+    email: string
+    type: string
+    name: string
   }
 }
 
@@ -35,25 +36,24 @@ export const authOptions: AuthOptions = {
         token: { label: "JWT", type: "text", placeholder: "" },
       },
       async authorize(credentials) {
+        let user
+        if (!credentials) return null
 
-        let user;
-        if(!credentials) return null;
-
-        if(credentials.type=="ADMIN"){
-            user = await loginAdmin(credentials.token);
-        }else if(credentials.type=="MEMBER"){
-            user = await loginAdmin(credentials.token);
-        }else{
-            return null;
+        if (credentials.type == "ADMIN") {
+          user = await loginAdmin(credentials.token)
+        } else if (credentials.type == "MEMBER") {
+          user = await loginMember(credentials.token)
+        } else {
+          return null
         }
 
-        if(!user) return null;
+        if (!user) return null
         return {
           id: user.id,
           email: user.email,
           type: user.type,
-          name: user.name || ""
-        };
+          name: user.name || "",
+        }
       },
     }),
   ],
@@ -64,25 +64,25 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.type = user.type;
-        token.name = user.name;
+        token.id = user.id
+        token.email = user.email
+        token.type = user.type
+        token.name = user.name
       }
-      return token;
+      return token
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id as string;
-        session.user.email = token.email as string;
-        session.user.type = token.type as string;
-        session.user.name = token.name as string;
+        session.user.id = token.id as string
+        session.user.email = token.email as string
+        session.user.type = token.type as string
+        session.user.name = token.name as string
       }
-      return session;
+      return session
     },
   },
   pages: {
     signIn: "/signin",
   },
   secret: process.env.NEXTAUTH_SECRET,
-};
+}

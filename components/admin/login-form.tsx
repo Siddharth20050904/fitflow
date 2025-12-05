@@ -37,7 +37,6 @@ export function AdminLoginForm() {
         <Input
           id="email"
           type="email"
-          placeholder="owner@gym.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required

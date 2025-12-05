@@ -1,10 +1,58 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { CreditCard, FileText, Calendar, AlertCircle } from 'lucide-react'
+import { fetchMemberDashboard } from '@/app/api/member/fetchDashboard';
+import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+
+type Data = {
+    memberStatus: string;
+    memberName: string;
+    joinDate: string;
+    currentPackage: {
+        name: string;
+        price: number;
+        billingCycle: string;
+    } | null;
+    nextBillDue: {
+        date: string;
+        amount: number;
+    } | null;
+    outstandingBalance: number;
+    recentBills: {
+        id: string;
+        date: string;
+        amount: number;
+        status: string;
+        packageName: string | undefined;
+    }[];
+}
 
 export function MemberDashboard() {
+  const [dashboardData, setDashboardData] = useState<Data | null>(null);
+  const {data: session} = useSession(); 
+  const [memberId, setMemberId] = useState<string | null>(null);
+  const [fetching, setFetching] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      setMemberId(session.user.id);
+    }
+  }, [session?.user?.id]);
+  useEffect(() => {
+    async function loadDashboard() {
+      if(!memberId) return;
+      setFetching(true);
+      const response = await fetchMemberDashboard(memberId);
+      if (response.ok) {
+        setDashboardData(response.dashboard ?? null);
+      }
+      setFetching(false);
+    }
+    loadDashboard();
+  }, [memberId]);
+
   return (
     <div className="space-y-8">
       <div>
@@ -20,8 +68,7 @@ export function MemberDashboard() {
             <CreditCard className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Active</div>
-            <p className="text-xs text-muted-foreground">Valid until Dec 2024</p>
+            <div className="text-2xl font-bold capitalize">{fetching ? 'Loading...' : dashboardData?.memberStatus}</div>
           </CardContent>
         </Card>
 
@@ -31,8 +78,8 @@ export function MemberDashboard() {
             <Calendar className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Premium</div>
-            <p className="text-xs text-muted-foreground">₹5,000/month</p>
+            <div className="text-2xl font-bold">{fetching ? 'Loading...' : dashboardData?.currentPackage?.name}</div>
+            <p className="text-xs text-muted-foreground">{fetching ? 'Loading...' : `₹${dashboardData?.currentPackage?.price}/${dashboardData?.currentPackage?.billingCycle}`}</p>
           </CardContent>
         </Card>
 
@@ -42,8 +89,8 @@ export function MemberDashboard() {
             <FileText className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Dec 15</div>
-            <p className="text-xs text-muted-foreground">₹5,000</p>
+            <div className="text-2xl font-bold">{fetching ? 'Loading...' : dashboardData?.nextBillDue?.date}</div>
+            <p className="text-xs text-muted-foreground">{fetching ? 'Loading...' : `₹${dashboardData?.nextBillDue?.amount}`}</p>
           </CardContent>
         </Card>
 
@@ -53,38 +100,10 @@ export function MemberDashboard() {
             <AlertCircle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹0</div>
-            <p className="text-xs text-muted-foreground">All paid up!</p>
+            <div className="text-2xl font-bold">{fetching ? 'Loading...' : `₹${dashboardData?.outstandingBalance}`}</div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-auto flex-col py-4">
-              <FileText className="h-5 w-5 mb-2" />
-              <span>View Bills</span>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col py-4">
-              <FileText className="h-5 w-5 mb-2" />
-              <span>Download Receipt</span>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col py-4">
-              <CreditCard className="h-5 w-5 mb-2" />
-              <span>Pay Now</span>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col py-4">
-              <Calendar className="h-5 w-5 mb-2" />
-              <span>Upgrade Plan</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Recent Bills */}
       <Card>
@@ -93,24 +112,20 @@ export function MemberDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {[
-              { id: 'B001', date: 'Nov 15, 2024', amount: '₹5,000', status: 'Paid' },
-              { id: 'B002', date: 'Oct 15, 2024', amount: '₹5,000', status: 'Paid' },
-              { id: 'B003', date: 'Sep 15, 2024', amount: '₹5,000', status: 'Paid' },
-            ].map((bill) => (
-              <div key={bill.id} className="flex items-center justify-between pb-4 border-b last:border-0">
+            {fetching ? 'Loading...' : dashboardData?.recentBills.map((bill) => (
+              <div key={bill.id} className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">{bill.id}</p>
+                  <p className="font-medium">{bill.packageName}</p>
                   <p className="text-sm text-muted-foreground">{bill.date}</p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <p className="font-semibold">{bill.amount}</p>
-                  <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
-                    {bill.status}
-                  </span>
+                <div className="text-right">
+                  <p className="font-medium">₹{bill.amount}</p>
+                  <p className={`text-sm ${bill.status === 'paid' ? 'text-green-500' : bill.status === 'pending' ? 'text-yellow-500' : 'text-red-500'}`}>
+                    {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
+                  </p>
                 </div>
               </div>
-            ))}
+            ))} 
           </div>
         </CardContent>
       </Card>

@@ -378,7 +378,7 @@ export function AdminStorePage() {
                 <TrendingUp className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">₹{analytics ? analytics.totalRevenue : 'Loading...'}</div>
+                <div className="text-2xl font-bold">{analytics ? '₹'+analytics.totalRevenue : 'Loading...'}</div>
               </CardContent>
             </Card>
 
@@ -410,7 +410,7 @@ export function AdminStorePage() {
                 <TrendingUp className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">₹{analytics ? analytics.avgOrderValue : 'Loading...'}</div>
+                <div className="text-2xl font-bold">{analytics ? '₹'+analytics.avgOrderValue : 'Loading...'}</div>
                 <p className="text-xs text-muted-foreground">Per transaction</p>
               </CardContent>
             </Card>

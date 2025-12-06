@@ -96,7 +96,6 @@ export function MemberSettingsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
           <TabsTrigger value="membership">Membership</TabsTrigger>
         </TabsList>
 
@@ -145,33 +144,6 @@ export function MemberSettingsPage() {
                   "Save Changes"
                 )}
               </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="preferences" className="space-y-6 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {[
-                { label: "Bill Payment Reminders", desc: "Get reminded before bills are due", key: "billReminders" },
-                { label: "Payment Receipts", desc: "Email receipt after payment", key: "paymentReceipts" },
-                { label: "Promotional Offers", desc: "Receive special offers and discounts", key: "promoOffers" },
-                { label: "Gym Updates", desc: "Get gym announcements and news", key: "gymUpdates" },
-              ].map((pref) => (
-                <label
-                  key={pref.key}
-                  className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/50"
-                >
-                  <div>
-                    <p className="font-medium">{pref.label}</p>
-                    <p className="text-sm text-muted-foreground">{pref.desc}</p>
-                  </div>
-                  <input type="checkbox" defaultChecked className="h-4 w-4 rounded" />
-                </label>
-              ))}
             </CardContent>
           </Card>
         </TabsContent>

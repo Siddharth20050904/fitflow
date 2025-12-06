@@ -33,7 +33,7 @@ export function MemberDashboard() {
   const [dashboardData, setDashboardData] = useState<Data | null>(null);
   const {data: session} = useSession(); 
   const [memberId, setMemberId] = useState<string | null>(null);
-  const [fetching, setFetching] = useState<boolean>(false);
+  const [fetching, setFetching] = useState<boolean>(true);
 
   useEffect(() => {
     if (session?.user?.id) {

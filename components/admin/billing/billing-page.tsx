@@ -6,7 +6,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { BillingTable } from "./billing-table"
-import { Plus, Download, Filter } from "lucide-react"
+import { Plus } from "lucide-react"
 import toast from "react-hot-toast"
 import { fetchMembers } from "@/app/api/member/fetchMembers"
 import { createBill } from "@/app/api/billing/createBill"
@@ -134,18 +134,6 @@ export function BillingPage() {
         <Button className="bg-primary text-primary-foreground" onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Create Bill
-        </Button>
-      </div>
-
-      {/* Buttons */}
-      <div className="flex gap-2">
-        <Button variant="outline">
-          <Filter className="h-4 w-4 mr-2" />
-          Filter
-        </Button>
-        <Button variant="outline">
-          <Download className="h-4 w-4 mr-2" />
-          Export
         </Button>
       </div>
 

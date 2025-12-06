@@ -103,6 +103,7 @@ export function AdminStorePage() {
   }
 
   const deleteOrderFunc = async(orderId: string) => {
+    setUpdatingOrderId(orderId);
     const deletedOrder = await deleteOrder(orderId);
     if(deletedOrder.ok){
       setOrders(prev => prev.filter(o => o.id !== orderId));
@@ -110,6 +111,7 @@ export function AdminStorePage() {
     }else{
       toast.error("Failed to delete order");
     }
+    setUpdatingOrderId(null);
   }
 
   return (
@@ -340,8 +342,8 @@ export function AdminStorePage() {
                         <td className="py-3 px-4 flex gap-3">
                           {/* Edit order */}
                           <button
-                            disabled={order.status === "delivered"}
-                            className={`p-1 hover:bg-muted rounded transition-colors ${order.status === "delivered" ? "opacity-50 cursor-not-allowed" : ""}`}
+                            disabled={order.status === "delivered" || updatingOrderId === order.id}
+                            className={`p-1 hover:bg-muted rounded transition-colors ${order.status === "delivered" || updatingOrderId === order.id ? "opacity-50 cursor-not-allowed" : ""}`}
                             onClick={() => {
                               setSelectedOrder(order);
                               setEditingOrder(true);
@@ -353,8 +355,8 @@ export function AdminStorePage() {
 
                           {/* Delete order */}
                           <button
-                            disabled={order.status === "delivered"}
-                            className={`p-1 hover:bg-muted rounded transition-colors text-destructive ${order.status === "delivered" ? "opacity-50 cursor-not-allowed" : ""}`}
+                            disabled={order.status === "delivered" || updatingOrderId === order.id}
+                            className={`p-1 hover:bg-muted rounded transition-colors text-destructive ${order.status === "delivered" || updatingOrderId === order.id ? "opacity-50 cursor-not-allowed" : ""}`}
                             onClick={() => deleteOrderFunc(order.id)}
                           >
                             <Trash2 className="h-4 w-4" />
